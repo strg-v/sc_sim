@@ -1,11 +1,11 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/Events.hh>
+#include <gazebo/transport/Node.hh>
 #include <rclcpp/rclcpp.hpp>
-#include <geometry_msgs/msg/wrench.hpp>
-#include <thread>
-#include <ignition/math/Vector3.hh>
 #include <spacecraft_msgs/msg/thrust_command.hpp>
+#include <ignition/math/Vector3.hh>
+#include <thread>
 
 namespace gazebo_plugins
 {
@@ -24,6 +24,7 @@ namespace gazebo_plugins
         gazebo::physics::WorldPtr world_;
 
         std::string plugin_name = "[ApplyForcePlugin] ";
+        std::string thruster_name;
 
         ignition::math::Vector3d mounting_point;
         ignition::math::Vector3d possible_direction;
@@ -32,61 +33,27 @@ namespace gazebo_plugins
 
         ignition::math::Vector3d current_force;
 
+        bool currently_firing;
+        bool previously_firing;
+
+        // Effect publisher
+        gazebo::transport::PublisherPtr visPub;
+
         public:
         
         void Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) override
         {
             std::cout << this->plugin_name << "Hello from ApplyForcePlugin! Model: " << model->GetName() << std::endl;
             
-            std::string thruster_name = "";
+            if(!this->check_elements_of_model(sdf))
+            {
+                return;
+            }
             
-            if(!sdf->HasElement("thruster_name"))
-            {
-                std::cout << this->plugin_name << "Missing 'thruster_name' field in plugin. Abort." << std::endl;
-                return;
-            } else {
-                thruster_name = sdf->Get<std::string>("thruster_name");
-                std::cout << this->plugin_name << "Found thruster name: " << thruster_name << std::endl;
-            }
-
-            if(!sdf->HasElement("mounting_point"))
-            {
-                std::cout << this->plugin_name << "Missing 'mounting_point' field in plugin. Abort." << std::endl;
-                return;
-            } else {
-                this->mounting_point = sdf->Get<ignition::math::Vector3d>("mounting_point");
-                std::cout << this->plugin_name << "Found mounting point: [" << this->mounting_point << "]" << std::endl;
-            }
-
-            if(!sdf->HasElement("possible_directions"))
-            {
-                std::cout << this->plugin_name << "Missing 'possible_directions' field in plugin. Abort." << std::endl;
-                return;
-            } else {
-                this->possible_direction = sdf->Get<ignition::math::Vector3d>("possible_directions");
-                std::cout << this->plugin_name << "Found possible directions: [" << this->possible_direction << "]" << std::endl;
-            }
-
-            if(!sdf->HasElement("force"))
-            {
-                std::cout << this->plugin_name << "Missing 'force' field in plugin. Abort." << std::endl;
-                return;
-            } else {
-                this->force = sdf->Get<float>("force");
-                std::cout << this->plugin_name << "Found force: " << this->force << std::endl;
-            }
-
-            if(!sdf->HasElement("min_duration"))
-            {
-                std::cout << this->plugin_name << "Missing 'min_duration' field in plugin. Abort." << std::endl;
-                return;
-            } else {
-                this->min_duration = sdf->Get<float>("min_duration");
-                std::cout << this->plugin_name << "Found min_duration: " << this->min_duration << std::endl;
-            }
-
             this->current_force = ignition::math::Vector3d(0.0, 0.0, 0.0);
             this->world_ = model->GetWorld();
+            currently_firing = false;
+            previously_firing = false;
 
             auto links = model->GetLinks();
             if (links.empty()) {
@@ -123,6 +90,11 @@ namespace gazebo_plugins
             this->update_connection_ = gazebo::event::Events::ConnectWorldUpdateBegin(
                 std::bind(&ApplyForcePlugin::OnUpdate, this)
             );
+
+            gazebo::transport::NodePtr gz_tramsport_node(new gazebo::transport::Node());
+            gz_tramsport_node->Init();  // ✅ This is correct
+
+            visPub = gz_tramsport_node->Advertise<gazebo::msgs::Visual>("~/visual");
             
             node_ = rclcpp::Node::make_shared("apply_force_plugin_" + model->GetName() + "_" + thruster_name);
             sub_ = node_->create_subscription<spacecraft_msgs::msg::ThrustCommand>(
@@ -133,8 +105,6 @@ namespace gazebo_plugins
                 std::cout << "[ApplyForcePlugin] ROS 2 spinning thread started.\n";
                 rclcpp::spin(node_);
             });
-
-
 
             std::cout << "[ApplyForcePlugin] Loaded and listening on /spacecraft/thruster/" << thruster_name << std::endl;
         }
@@ -188,7 +158,49 @@ namespace gazebo_plugins
                 ignition::math::Vector3d world_force = rot.RotateVector(this->current_force);
 
                 this->link_->AddForceAtRelativePosition(world_force, this->mounting_point);
+
+                // Firing effect
+                if(!this->currently_firing)
+                {
+                    ignition::math::Vector3d world_position = link_->WorldPose().CoordPositionAdd(this->mounting_point);
+                    ignition::math::Vector3d force_dir = this->current_force.Normalized();
+                    ignition::math::Vector3d offset_mounting_point = this->mounting_point - force_dir * 0.15;
+
+
+                    ignition::math::Quaterniond force_quat;
+                    force_quat.From2Axes(ignition::math::Vector3d::UnitZ, force_dir);
+
+                    gazebo::msgs::Visual visMsg;
+                    visMsg.set_name("spacecraft::base_link::cone_visual_" + this->thruster_name); // Full scoped name
+                    visMsg.set_parent_name("spacecraft::base_link");
+                    gazebo::msgs::Set(visMsg.mutable_pose(), ignition::math::Pose3d(offset_mounting_point, force_quat));
+                    visMsg.set_visible(true);
+                    visMsg.set_delete_me(false);
+                    visPub->Publish(visMsg);
+
+                }
+
+                this->currently_firing = true;
+
+            } else 
+            {
+                this->currently_firing = false;
+
+                // Deactivate visual effect
+                if(this->previously_firing == true)
+                {
+                    gazebo::msgs::Visual visMsg;
+                    visMsg.set_name("spacecraft::base_link::cone_visual_" + this->thruster_name); // Full scoped name
+                    visMsg.set_parent_name("spacecraft::base_link");
+                    visMsg.set_visible(false);
+                    visMsg.set_delete_me(false);
+                    visPub->Publish(visMsg);
+                }
+
             }
+
+            this->previously_firing = this->currently_firing;
+
         }
 
         ~ApplyForcePlugin() override
@@ -198,6 +210,58 @@ namespace gazebo_plugins
             {
                 rclcpp_thread_.join();
             }
+        }
+
+        private:
+
+        bool check_elements_of_model(sdf::ElementPtr sdf)
+        {
+            if(!sdf->HasElement("thruster_name"))
+            {
+                std::cout << this->plugin_name << "Missing 'thruster_name' field in plugin. Abort." << std::endl;
+                return false;
+            } else {
+                this->thruster_name = sdf->Get<std::string>("thruster_name");
+                std::cout << this->plugin_name << "Found thruster name: " << this->thruster_name << std::endl;
+            }
+
+            if(!sdf->HasElement("mounting_point"))
+            {
+                std::cout << this->plugin_name << "Missing 'mounting_point' field in plugin. Abort." << std::endl;
+                return false;
+            } else {
+                this->mounting_point = sdf->Get<ignition::math::Vector3d>("mounting_point");
+                std::cout << this->plugin_name << "Found mounting point: [" << this->mounting_point << "]" << std::endl;
+            }
+
+            if(!sdf->HasElement("possible_directions"))
+            {
+                std::cout << this->plugin_name << "Missing 'possible_directions' field in plugin. Abort." << std::endl;
+                return false;
+            } else {
+                this->possible_direction = sdf->Get<ignition::math::Vector3d>("possible_directions");
+                std::cout << this->plugin_name << "Found possible directions: [" << this->possible_direction << "]" << std::endl;
+            }
+
+            if(!sdf->HasElement("force"))
+            {
+                std::cout << this->plugin_name << "Missing 'force' field in plugin. Abort." << std::endl;
+                return false;
+            } else {
+                this->force = sdf->Get<float>("force");
+                std::cout << this->plugin_name << "Found force: " << this->force << std::endl;
+            }
+
+            if(!sdf->HasElement("min_duration"))
+            {
+                std::cout << this->plugin_name << "Missing 'min_duration' field in plugin. Abort." << std::endl;
+                return false;
+            } else {
+                this->min_duration = sdf->Get<float>("min_duration");
+                std::cout << this->plugin_name << "Found min_duration: " << this->min_duration << std::endl;
+            }
+
+            return true;
         }
 
     };

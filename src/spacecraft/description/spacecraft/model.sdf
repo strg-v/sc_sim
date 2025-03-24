@@ -72,13 +72,78 @@
           <diffuse>0.9 0 0 1</diffuse>
         </material>
       </visual>
+
+      <visual name='cone_visual_right'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_left'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_front'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_back'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
     </link>
 
     <plugin filename='libapply_force_plugin.so' name='apply_force_plugin_front'>
         <thruster_name>front</thruster_name>
         <mounting_point>0 0.1725 0</mounting_point>
         <possible_directions>1 0 1</possible_directions>
-        <force>1</force>
+        <force>0.5</force>
         <min_duration>0.1</min_duration>
     </plugin>
 
@@ -86,7 +151,7 @@
       <thruster_name>back</thruster_name>
       <mounting_point>0 -0.1725 0</mounting_point>  <!-- Opposite of front -->
       <possible_directions>-1 0 1</possible_directions> <!-- Opposite X (assuming body-forward is +X) -->
-      <force>1</force>
+      <force>0.5</force>
       <min_duration>0.1</min_duration>
     </plugin>
 
@@ -94,7 +159,7 @@
       <thruster_name>left</thruster_name>
       <mounting_point>-0.1725 0 0</mounting_point>
       <possible_directions>0 1 1</possible_directions>  <!-- Lateral force to the left -->
-      <force>1</force>
+      <force>0.5</force>
       <min_duration>0.1</min_duration>
     </plugin>
 
@@ -102,7 +167,7 @@
       <thruster_name>right</thruster_name>
       <mounting_point>0.1725 0 0</mounting_point>
       <possible_directions>0 -1 1</possible_directions> <!-- Lateral force to the right -->
-      <force>1</force>
+      <force>0.5</force>
       <min_duration>0.1</min_duration>
     </plugin>
 
