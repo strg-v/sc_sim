@@ -1,0 +1,43 @@
+# === ROS 2 build artifacts ===
+build/
+install/
+log/
+
+# Colcon and CMake
+colcon.meta
+CMakeLists.txt.user
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/
+
+
+# Model cache and generated files
+~/.gazebo/
+model_editor.db
+
+# === ROS 2 workspace files ===
+*.launch.py~
+*.pyc
+*.swp
+*.egg-info/
+.deps/
+
+# Linux
+*~
+*.swp
+*.swo
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# === Custom data ===
+*.bag
+*.db3
+*.log
+*.csv
+
+# === Env files and secrets ===
+.env
+.envrc
+secrets.yaml

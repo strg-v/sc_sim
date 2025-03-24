@@ -1,0 +1,110 @@
+<sdf version='1.7'>
+  <model name='spacecraft'>
+    <link name='base_link'>
+      ...
+      <visual name='base_link_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.3 0.3 0.3</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.83 0.69 0.22 1</ambient>
+          <diffuse>0.83 0.69 0.22 1</diffuse>
+          <specular>0.9 0.9 0.9 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+
+      <!-- 🔵 Back Thruster: Blue -->
+      <visual name='base_link_fixed_joint_lump__thruster_back_link_visual_1'>
+        <pose>0 -0.175 0 0 -0 3.1415</pose>
+        <geometry>
+          <box>
+            <size>0.05 0.05 0.05</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0 0 0.8 1</ambient>
+          <diffuse>0 0 0.8 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 🟢 Front Thruster: Green -->
+      <visual name='base_link_fixed_joint_lump__thruster_front_link_visual_2'>
+        <pose>0 0.175 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05 0.05 0.05</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0 0.8 0 1</ambient>
+          <diffuse>0 0.8 0 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 🟡 Left Thruster: Yellow -->
+      <visual name='base_link_fixed_joint_lump__thruster_left_link_visual_3'>
+        <pose>-0.175 0 0 0 -0 1.5707</pose>
+        <geometry>
+          <box>
+            <size>0.05 0.05 0.05</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.9 0.9 0 1</ambient>
+          <diffuse>0.9 0.9 0 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 🔴 Right Thruster: Red -->
+      <visual name='base_link_fixed_joint_lump__thruster_right_link_visual_4'>
+        <pose>0.175 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <box>
+            <size>0.05 0.05 0.05</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.9 0 0 1</ambient>
+          <diffuse>0.9 0 0 1</diffuse>
+        </material>
+      </visual>
+    </link>
+
+    <plugin filename='libapply_force_plugin.so' name='apply_force_plugin_front'>
+        <thruster_name>front</thruster_name>
+        <mounting_point>0 0.1725 0</mounting_point>
+        <possible_directions>1 0 1</possible_directions>
+        <force>1</force>
+        <min_duration>0.1</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_back">
+      <thruster_name>back</thruster_name>
+      <mounting_point>0 -0.1725 0</mounting_point>  <!-- Opposite of front -->
+      <possible_directions>-1 0 1</possible_directions> <!-- Opposite X (assuming body-forward is +X) -->
+      <force>1</force>
+      <min_duration>0.1</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_left">
+      <thruster_name>left</thruster_name>
+      <mounting_point>-0.1725 0 0</mounting_point>
+      <possible_directions>0 1 1</possible_directions>  <!-- Lateral force to the left -->
+      <force>1</force>
+      <min_duration>0.1</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_right">
+      <thruster_name>right</thruster_name>
+      <mounting_point>0.1725 0 0</mounting_point>
+      <possible_directions>0 -1 1</possible_directions> <!-- Lateral force to the right -->
+      <force>1</force>
+      <min_duration>0.1</min_duration>
+    </plugin>
+
+  </model>
+</sdf>

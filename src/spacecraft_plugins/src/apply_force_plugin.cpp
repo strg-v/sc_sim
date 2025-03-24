@@ -1,0 +1,207 @@
+#include <gazebo/common/Plugin.hh>
+#include <gazebo/physics/physics.hh>
+#include <gazebo/common/Events.hh>
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/wrench.hpp>
+#include <thread>
+#include <ignition/math/Vector3.hh>
+#include <spacecraft_msgs/msg/thrust_command.hpp>
+
+namespace gazebo_plugins
+{
+    class ApplyForcePlugin : public gazebo::ModelPlugin
+    {
+        private:
+
+        gazebo::physics::ModelPtr model_;
+        gazebo::physics::LinkPtr link_;
+        rclcpp::Node::SharedPtr node_;
+        rclcpp::Subscription<spacecraft_msgs::msg::ThrustCommand>::SharedPtr sub_;
+        std::thread rclcpp_thread_;
+
+        gazebo::event::ConnectionPtr update_connection_;
+        gazebo::common::Time end_time_;
+        gazebo::physics::WorldPtr world_;
+
+        std::string plugin_name = "[ApplyForcePlugin] ";
+
+        ignition::math::Vector3d mounting_point;
+        ignition::math::Vector3d possible_direction;
+        float force;
+        float min_duration;
+
+        ignition::math::Vector3d current_force;
+
+        public:
+        
+        void Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) override
+        {
+            std::cout << this->plugin_name << "Hello from ApplyForcePlugin! Model: " << model->GetName() << std::endl;
+            
+            std::string thruster_name = "";
+            
+            if(!sdf->HasElement("thruster_name"))
+            {
+                std::cout << this->plugin_name << "Missing 'thruster_name' field in plugin. Abort." << std::endl;
+                return;
+            } else {
+                thruster_name = sdf->Get<std::string>("thruster_name");
+                std::cout << this->plugin_name << "Found thruster name: " << thruster_name << std::endl;
+            }
+
+            if(!sdf->HasElement("mounting_point"))
+            {
+                std::cout << this->plugin_name << "Missing 'mounting_point' field in plugin. Abort." << std::endl;
+                return;
+            } else {
+                this->mounting_point = sdf->Get<ignition::math::Vector3d>("mounting_point");
+                std::cout << this->plugin_name << "Found mounting point: [" << this->mounting_point << "]" << std::endl;
+            }
+
+            if(!sdf->HasElement("possible_directions"))
+            {
+                std::cout << this->plugin_name << "Missing 'possible_directions' field in plugin. Abort." << std::endl;
+                return;
+            } else {
+                this->possible_direction = sdf->Get<ignition::math::Vector3d>("possible_directions");
+                std::cout << this->plugin_name << "Found possible directions: [" << this->possible_direction << "]" << std::endl;
+            }
+
+            if(!sdf->HasElement("force"))
+            {
+                std::cout << this->plugin_name << "Missing 'force' field in plugin. Abort." << std::endl;
+                return;
+            } else {
+                this->force = sdf->Get<float>("force");
+                std::cout << this->plugin_name << "Found force: " << this->force << std::endl;
+            }
+
+            if(!sdf->HasElement("min_duration"))
+            {
+                std::cout << this->plugin_name << "Missing 'min_duration' field in plugin. Abort." << std::endl;
+                return;
+            } else {
+                this->min_duration = sdf->Get<float>("min_duration");
+                std::cout << this->plugin_name << "Found min_duration: " << this->min_duration << std::endl;
+            }
+
+            this->current_force = ignition::math::Vector3d(0.0, 0.0, 0.0);
+            this->world_ = model->GetWorld();
+
+            auto links = model->GetLinks();
+            if (links.empty()) {
+                std::cerr << "[ApplyForcePlugin] ERROR: No links in model.\n";
+                return;
+            } else {
+                std::cout << "[ApplyForcePlugin] Found links:\n";
+                for (const auto& link : links) {
+                    std::cout << " - " << link->GetName() << std::endl;
+                }
+            }
+
+            // Try fallback: use first link if base_link is not found
+            this->link_ = model->GetLink("base_link");
+            if (!this->link_) {
+                std::cerr << "[ApplyForcePlugin] WARNING: 'base_link' not found. Using first available link instead.\n";
+                this->link_ = links.front();
+                if (this->link_) {
+                    std::cout << "[ApplyForcePlugin] Fallback link: " << this->link_->GetName() << "\n";
+                } else {
+                    std::cerr << "[ApplyForcePlugin] ERROR: Still no link found. Plugin won't work.\n";
+                    return;
+                }
+            } else {
+                std::cout << "[ApplyForcePlugin] Successfully attached to base_link\n";
+            }
+
+            int argc = 0;
+            char** argv = nullptr;
+            if (!rclcpp::ok()) {
+                rclcpp::init(argc, argv);
+            }
+
+            this->update_connection_ = gazebo::event::Events::ConnectWorldUpdateBegin(
+                std::bind(&ApplyForcePlugin::OnUpdate, this)
+            );
+            
+            node_ = rclcpp::Node::make_shared("apply_force_plugin_" + model->GetName() + "_" + thruster_name);
+            sub_ = node_->create_subscription<spacecraft_msgs::msg::ThrustCommand>(
+                "/spacecraft/thruster/" + thruster_name, 10,
+                std::bind(&ApplyForcePlugin::OnForceMsg, this, std::placeholders::_1));
+
+            rclcpp_thread_ = std::thread([this]() {
+                std::cout << "[ApplyForcePlugin] ROS 2 spinning thread started.\n";
+                rclcpp::spin(node_);
+            });
+
+
+
+            std::cout << "[ApplyForcePlugin] Loaded and listening on /spacecraft/thruster/" << thruster_name << std::endl;
+        }
+
+        int clamp_direction(double v)
+        {
+            if (v > 0.0) return 1;
+            if (v < 0.0) return -1;
+            return 0;
+        }
+
+        void OnForceMsg(const spacecraft_msgs::msg::ThrustCommand::SharedPtr msg)
+        {
+            
+            ignition::math::Vector3d f(
+                clamp_direction(msg->direction_selection.x),
+                clamp_direction(msg->direction_selection.y),
+                clamp_direction(msg->direction_selection.z)
+            );
+
+            rclcpp::Duration ros_duration = msg->duration;
+            double duration_sec = ros_duration.seconds();  
+            
+            if(duration_sec < this->min_duration){
+                return;
+            }
+
+            gazebo::common::Time gz_duration(duration_sec);
+
+            // Only apply force in available directions
+            f = f * this->possible_direction * this->force;
+            
+            // Only apply force in available magnitude
+
+            this->current_force = f;
+
+            auto sim_time = this->world_->SimTime();
+            end_time_ = sim_time + gz_duration;
+
+        }
+
+        void OnUpdate()
+        {
+            auto sim_time = world_->SimTime();
+            if(sim_time < end_time_)
+            {
+
+                ignition::math::Quaterniond rot = link_->WorldPose().Rot();
+
+                // Rotate body force into world force
+                ignition::math::Vector3d world_force = rot.RotateVector(this->current_force);
+
+                this->link_->AddForceAtRelativePosition(world_force, this->mounting_point);
+            }
+        }
+
+        ~ApplyForcePlugin() override
+        {
+            rclcpp::shutdown();
+            if(rclcpp_thread_.joinable())
+            {
+                rclcpp_thread_.join();
+            }
+        }
+
+    };
+
+}
+
+GZ_REGISTER_MODEL_PLUGIN(gazebo_plugins::ApplyForcePlugin)
