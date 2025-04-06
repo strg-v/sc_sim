@@ -467,5 +467,16 @@
       <min_duration>0.01</min_duration>
     </plugin>
 
+
+    <plugin name="spacecraft_pose_publisher" filename="libgazebo_ros_p3d.so">
+      <ros>
+        <namespace>spacecraft</namespace>
+        <remapping>odom:=state</remapping>
+      </ros>
+      <body_name>base_link</body_name>
+      <frame_name>world</frame_name>
+      <update_rate>50.0</update_rate>
+    </plugin>
+
   </model>
 </sdf>
