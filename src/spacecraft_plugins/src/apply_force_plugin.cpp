@@ -92,7 +92,7 @@ namespace gazebo_plugins
             );
 
             gazebo::transport::NodePtr gz_tramsport_node(new gazebo::transport::Node());
-            gz_tramsport_node->Init();  // ✅ This is correct
+            gz_tramsport_node->Init(); 
 
             visPub = gz_tramsport_node->Advertise<gazebo::msgs::Visual>("~/visual");
             
@@ -118,6 +118,8 @@ namespace gazebo_plugins
 
         void OnForceMsg(const spacecraft_msgs::msg::ThrustCommand::SharedPtr msg)
         {
+
+            //std::cout << "[ApplyForcePlugin] Received Message: x: " << msg->direction_selection.x << " y: " << msg->direction_selection.y << " z: " << msg->direction_selection.z << std::endl;
             
             ignition::math::Vector3d f(
                 clamp_direction(msg->direction_selection.x),
@@ -126,7 +128,7 @@ namespace gazebo_plugins
             );
 
             rclcpp::Duration ros_duration = msg->duration;
-            double duration_sec = ros_duration.seconds();  
+            double duration_sec = ros_duration.seconds() + (ros_duration.nanoseconds() / 1e9);
             
             if(duration_sec < this->min_duration){
                 return;
@@ -135,7 +137,7 @@ namespace gazebo_plugins
             gazebo::common::Time gz_duration(duration_sec);
 
             // Only apply force in available directions
-            f = f * this->possible_direction * this->force;
+            f = this->possible_direction * this->force;
             
             // Only apply force in available magnitude
 

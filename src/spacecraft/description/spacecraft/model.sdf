@@ -19,7 +19,7 @@
 
       <!-- 🔵 Back Thruster: Blue -->
       <visual name='base_link_fixed_joint_lump__thruster_back_link_visual_1'>
-        <pose>0 -0.175 0 0 -0 3.1415</pose>
+        <pose>0 -0.175 0 0 0 0</pose>
         <geometry>
           <box>
             <size>0.05 0.05 0.05</size>
@@ -33,7 +33,7 @@
 
       <!-- 🟢 Front Thruster: Green -->
       <visual name='base_link_fixed_joint_lump__thruster_front_link_visual_2'>
-        <pose>0 0.175 0 0 -0 0</pose>
+        <pose>0 0.175 0 0 0 0</pose>
         <geometry>
           <box>
             <size>0.05 0.05 0.05</size>
@@ -47,7 +47,7 @@
 
       <!-- 🟡 Left Thruster: Yellow -->
       <visual name='base_link_fixed_joint_lump__thruster_left_link_visual_3'>
-        <pose>-0.175 0 0 0 -0 1.5707</pose>
+        <pose>-0.175 0 0 0 0 0</pose>
         <geometry>
           <box>
             <size>0.05 0.05 0.05</size>
@@ -61,7 +61,7 @@
 
       <!-- 🔴 Right Thruster: Red -->
       <visual name='base_link_fixed_joint_lump__thruster_right_link_visual_4'>
-        <pose>0.175 0 0 0 0 -1.5707</pose>
+        <pose>0.175 0 0 0 0 0</pose>
         <geometry>
           <box>
             <size>0.05 0.05 0.05</size>
@@ -73,7 +73,9 @@
         </material>
       </visual>
 
-      <visual name='cone_visual_right'>
+
+
+      <visual name='cone_visual_xp_yp'>
         <pose>0 0 0 0 0 -1.5707</pose>
         <geometry>
           <cylinder>
@@ -89,7 +91,7 @@
         </material>
       </visual>
 
-      <visual name='cone_visual_left'>
+      <visual name='cone_visual_xp_ym'>
         <pose>0 0 0 0 0 -1.5707</pose>
         <geometry>
           <cylinder>
@@ -105,7 +107,7 @@
         </material>
       </visual>
 
-      <visual name='cone_visual_front'>
+      <visual name='cone_visual_xp_zp'>
         <pose>0 0 0 0 0 -1.5707</pose>
         <geometry>
           <cylinder>
@@ -121,7 +123,202 @@
         </material>
       </visual>
 
-      <visual name='cone_visual_back'>
+      <visual name='cone_visual_xp_zm'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+
+      <visual name='cone_visual_xm_yp'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_xm_ym'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+      
+      <visual name='cone_visual_xm_zp'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_xm_zm'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+
+      <visual name='cone_visual_yp_xp'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_yp_xm'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_yp_zp'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_yp_zm'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+
+      <visual name='cone_visual_ym_xp'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+     <visual name='cone_visual_ym_xm'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+      <visual name='cone_visual_ym_zp'>
+        <pose>0 0 0 0 0 -1.5707</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.03</radius>
+            <length>0.2</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 0.5</diffuse>      <!-- A = 0.5 -->
+          <emissive>1 0 0 1</emissive>
+          <transparency>0</transparency>
+        </material>
+      </visual>
+
+     <visual name='cone_visual_ym_zm'>
         <pose>0 0 0 0 0 -1.5707</pose>
         <geometry>
           <cylinder>
@@ -139,36 +336,135 @@
 
     </link>
 
-    <plugin filename='libapply_force_plugin.so' name='apply_force_plugin_front'>
-        <thruster_name>front</thruster_name>
+    <plugin filename='libapply_force_plugin.so' name='apply_force_plugin_yp_xp'>
+        <thruster_name>yp_xp</thruster_name>
         <mounting_point>0 0.1725 0</mounting_point>
-        <possible_directions>1 0 1</possible_directions>
+        <possible_directions>1 0 0</possible_directions>
         <force>0.5</force>
-        <min_duration>0.1</min_duration>
+        <min_duration>0.01</min_duration>
+    </plugin>
+    
+    <plugin filename='libapply_force_plugin.so' name='apply_force_plugin_yp_xm'>
+        <thruster_name>yp_xm</thruster_name>
+        <mounting_point>0 0.1725 0</mounting_point>
+        <possible_directions>-1 0 0</possible_directions>
+        <force>0.5</force>
+        <min_duration>0.01</min_duration>
     </plugin>
 
-    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_back">
-      <thruster_name>back</thruster_name>
+    <plugin filename='libapply_force_plugin.so' name='apply_force_plugin_yp_zp'>
+        <thruster_name>yp_zp</thruster_name>
+        <mounting_point>0 0.1725 0</mounting_point>
+        <possible_directions>0 0 1</possible_directions>
+        <force>0.5</force>
+        <min_duration>0.01</min_duration>
+    </plugin>
+    
+    <plugin filename='libapply_force_plugin.so' name='apply_force_plugin_yp_zm'>
+        <thruster_name>yp_zm</thruster_name>
+        <mounting_point>0 0.1725 0</mounting_point>
+        <possible_directions>0 0 -1</possible_directions>
+        <force>0.5</force>
+        <min_duration>0.01</min_duration>
+    </plugin>
+
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_ym_xp">
+      <thruster_name>ym_xp</thruster_name>
       <mounting_point>0 -0.1725 0</mounting_point>  <!-- Opposite of front -->
-      <possible_directions>-1 0 1</possible_directions> <!-- Opposite X (assuming body-forward is +X) -->
+      <possible_directions>1 0 0</possible_directions> <!-- Opposite X (assuming body-forward is +X) -->
       <force>0.5</force>
-      <min_duration>0.1</min_duration>
+      <min_duration>0.01</min_duration>
     </plugin>
 
-    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_left">
-      <thruster_name>left</thruster_name>
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_ym_xm">
+      <thruster_name>ym_xm</thruster_name>
+      <mounting_point>0 -0.1725 0</mounting_point>  <!-- Opposite of front -->
+      <possible_directions>-1 0 0</possible_directions> <!-- Opposite X (assuming body-forward is +X) -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_ym_zp">
+      <thruster_name>ym_zp</thruster_name>
+      <mounting_point>0 -0.1725 0</mounting_point>  <!-- Opposite of front -->
+      <possible_directions>0 0 1</possible_directions> <!-- Opposite X (assuming body-forward is +X) -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_ym_zm">
+      <thruster_name>ym_zm</thruster_name>
+      <mounting_point>0 -0.1725 0</mounting_point>  <!-- Opposite of front -->
+      <possible_directions>0 0 -1</possible_directions> <!-- Opposite X (assuming body-forward is +X) -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
+    </plugin>
+
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xm_yp">
+      <thruster_name>xm_yp</thruster_name>
       <mounting_point>-0.1725 0 0</mounting_point>
-      <possible_directions>0 1 1</possible_directions>  <!-- Lateral force to the left -->
+      <possible_directions>0 1 0</possible_directions>  <!-- Lateral force to the left -->
       <force>0.5</force>
-      <min_duration>0.1</min_duration>
+      <min_duration>0.01</min_duration>
+    </plugin>
+  
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xm_ym">
+      <thruster_name>xm_ym</thruster_name>
+      <mounting_point>-0.1725 0 0</mounting_point>
+      <possible_directions>0 -1 0</possible_directions>  <!-- Lateral force to the left -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
     </plugin>
 
-    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_right">
-      <thruster_name>right</thruster_name>
-      <mounting_point>0.1725 0 0</mounting_point>
-      <possible_directions>0 -1 1</possible_directions> <!-- Lateral force to the right -->
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xm_zp">
+      <thruster_name>xm_zp</thruster_name>
+      <mounting_point>-0.1725 0 0</mounting_point>
+      <possible_directions>0 0 1</possible_directions>  <!-- Lateral force to the left -->
       <force>0.5</force>
-      <min_duration>0.1</min_duration>
+      <min_duration>0.01</min_duration>
+    </plugin>
+  
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xm_zm">
+      <thruster_name>xm_zm</thruster_name>
+      <mounting_point>-0.1725 0 0</mounting_point>
+      <possible_directions>0 0 -1</possible_directions>  <!-- Lateral force to the left -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
+    </plugin>
+
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xp_yp">
+      <thruster_name>xp_yp</thruster_name>
+      <mounting_point>0.1725 0 0</mounting_point>
+      <possible_directions>0 1 0</possible_directions> <!-- Lateral force to the right -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xp_ym">
+      <thruster_name>xp_ym</thruster_name>
+      <mounting_point>0.1725 0 0</mounting_point>
+      <possible_directions>0 -1 0</possible_directions> <!-- Lateral force to the right -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xp_zp">
+      <thruster_name>xp_zp</thruster_name>
+      <mounting_point>0.1725 0 0</mounting_point>
+      <possible_directions>0 0 1</possible_directions> <!-- Lateral force to the right -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
+    </plugin>
+
+    <plugin filename="libapply_force_plugin.so" name="apply_force_plugin_xp_zm">
+      <thruster_name>xp_zm</thruster_name>
+      <mounting_point>0.1725 0 0</mounting_point>
+      <possible_directions>0 0 -1</possible_directions> <!-- Lateral force to the right -->
+      <force>0.5</force>
+      <min_duration>0.01</min_duration>
     </plugin>
 
   </model>
