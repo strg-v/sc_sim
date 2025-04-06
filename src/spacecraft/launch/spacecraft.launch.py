@@ -20,6 +20,8 @@ def generate_launch_description():
     plugin_path = os.path.join(get_package_share_directory(plugin_pkg_name), "lib")
 
 
+
+
     return LaunchDescription([
 
         SetEnvironmentVariable('GAZEBO_MODEL_PATH', model_path),
@@ -30,6 +32,13 @@ def generate_launch_description():
                 os.path.join(get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')
             ),
             launch_arguments={'world': world_path}.items()
+        ),
+
+        Node(
+            package='py_thruster_allocation',
+            executable='thruster_mapper_node',
+            name='thruster_mapper',
+            output='screen'
         ),
 
     ])

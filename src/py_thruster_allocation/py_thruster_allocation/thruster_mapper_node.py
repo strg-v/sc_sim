@@ -1,7 +1,7 @@
 from rclpy.node import Node
 import rclpy
 from geometry_msgs.msg import Wrench, Vector3
-from spacecraft_msgs.msg import ThrustCommand, SpacecraftBodyForceCommand
+from spacecraft_msgs.msg import ThrustCommand
 import yaml
 import numpy as np
 from scipy.optimize import lsq_linear
