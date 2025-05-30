@@ -16,13 +16,13 @@ T = 0.1
 
 class thruster:
 
-    def __init__(self, force_vector, r, name: str, parent_node: Node):
+    def __init__(self, direction, r, name: str, parent_node: Node):
         # force_vector: direction and force of thruster
         # r: position of thruster in reference to body frame
         # name: name of thruster, used to create publisher 
         # parent_node: used to create publisher
         self.r = np.array(r)
-        self.force_vector = np.array(force_vector)
+        self.direction = direction
 
         self.parent_node = parent_node
         self.name = name
@@ -32,9 +32,9 @@ class thruster:
         # Fires the thruster with set direction and given duration
         cmd = ThrustCommand()
         cmd.direction_selection = Vector3(
-            x=float(self.force_vector[0]),
-            y=float(self.force_vector[1]),
-            z=float(self.force_vector[2]),
+            x=float(self.direction[0]),
+            y=float(self.direction[1]),
+            z=float(self.direction[2]),
         )
 
         dur = Duration()
@@ -71,7 +71,7 @@ class thrusterAssembly:
         for thr in self.thrusters:                
 
             r = thr.r
-            d = thr.force_vector
+            d = thr.direction
 
             torque = np.cross(r, d)
             b = np.concatenate([d, torque])
@@ -95,6 +95,7 @@ class thrusterAssembly:
 class thruster_mapper_node(Node):
 
     apply_durations = None
+    fire = False
 
     def __init__(self):
         super().__init__("thruster_mapper")
@@ -133,12 +134,31 @@ class thruster_mapper_node(Node):
         thr_ym_zm = thruster(force * np.array([0, 0, -1]), thr_ym_pos, "ym_zm", self)
         self.assembly_ym = thrusterAssembly([thr_ym_xp, thr_ym_xm, thr_ym_zp, thr_ym_zm])
 
+        # Define all 4 thrusters positioned in z+ directon
+        thr_zp_pos = [0, 0, 0.175]
+        thr_zp_xp = thruster(force * np.array([1, 0, 0]), thr_zp_pos, "zp_xp", self)
+        thr_zp_xm = thruster(force * np.array([-1, 0, 0]), thr_zp_pos, "zp_xm", self)
+        thr_zp_yp = thruster(force * np.array([0, 1, 0]), thr_zp_pos, "zp_yp", self)
+        thr_zp_ym = thruster(force * np.array([0, -1, 0]), thr_zp_pos, "zp_ym", self)
+        self.assembly_zp = thrusterAssembly([thr_zp_xp, thr_zp_xm, thr_zp_yp, thr_zp_ym])
+
+        # Define all 4 thrusters positioned in z- directon
+        thr_zm_pos = [0, 0, -0.175]
+        thr_zm_xp = thruster(force * np.array([1, 0, 0]), thr_zm_pos, "zp_xp", self)
+        thr_zm_xm = thruster(force * np.array([-1, 0, 0]), thr_zm_pos, "zp_xm", self)
+        thr_zm_yp = thruster(force * np.array([0, 1, 0]), thr_zm_pos, "zp_yp", self)
+        thr_zm_ym = thruster(force * np.array([0, -1, 0]), thr_zm_pos, "zp_ym", self)
+        self.assembly_zm = thrusterAssembly([thr_zm_xp, thr_zm_xm, thr_zm_yp, thr_zm_ym])
+
+
         # Combine all thruster allocation matricies to one big matrix
         self.thruster_alloc_mat = np.concatenate([
             self.assembly_xp.allocation_matrix,
             self.assembly_xm.allocation_matrix,
             self.assembly_yp.allocation_matrix,
-            self.assembly_ym.allocation_matrix
+            self.assembly_ym.allocation_matrix,
+            self.assembly_zp.allocation_matrix,
+            self.assembly_zm.allocation_matrix,
         ])
 
         self.get_logger().info("\n" + str(self.thruster_alloc_mat))
@@ -154,21 +174,30 @@ class thruster_mapper_node(Node):
         
     def pwm_callback(self):
         
+        # disable pwm behaviour and make it one shot
+        if not self.fire:
+            return
+            pass
+
         # Apply thruster force every pwm period
         if self.apply_durations is not None and len(self.apply_durations) == self.thruster_count:
-            
+            self.fire = False
             self.assembly_xp.fire(self.apply_durations[0:4])
             self.assembly_xm.fire(self.apply_durations[4:8])
             self.assembly_yp.fire(self.apply_durations[8:12])
             self.assembly_ym.fire(self.apply_durations[12:16])
+            self.assembly_zp.fire(self.apply_durations[16:20])
+            self.assembly_zm.fire(self.apply_durations[20:24])
 
     def wrench_callback(self, wrench: Wrench):
 
         # desired force and torque from message
-        self.desired = np.array([
+        self.tau_des = np.array([
             wrench.force.x, wrench.force.y, wrench.force.z,
             wrench.torque.x, wrench.torque.y, wrench.torque.z
         ])
+
+        J_desiered = self.tau_des * T # [Ns, Nms]
 
         # t will hold the on time for each thruster
         t = cp.Variable(self.thruster_count)
@@ -198,7 +227,8 @@ class thruster_mapper_node(Node):
             # (@) is matrix dot multiplication
             # B @ t is the resulting impulse (aim: T * self.desired)
             # slack_output is the deviation from the goal
-            B @ t + slack_output == T * alpha * self.desired,
+            #B @ t + slack_output == alpha * self.desired,
+            B @ t + slack_output == alpha * J_desiered,
             # Limits for the slack
             slack_output >= -max_slack,
             slack_output <= max_slack,
@@ -208,23 +238,26 @@ class thruster_mapper_node(Node):
         # Minimize the equation
         objective = cp.Minimize(
             # Square sum of duration to get most efficient firing
-            cp.sum_squares(t) +
+            cp.sum_squares(t)
             # Penalty of square sum of slack
-            10_000 * cp.sum_squares(slack_output) -
+            + 10_000 * cp.sum_squares(slack_output)
             # Penalty of alpha getting low
-            10_000 * alpha
+            - 10_000 * alpha
         )
 
         # Specify porblem with constraints and solve
         prob = cp.Problem(objective, constraints)
-        result = prob.solve()
+        result = prob.solve(verbose=False)
+
+        #res = B @ (t.value)
+        error = ((B @ t.value) / T) - self.tau_des
 
         # Check if valid result exists
         if not np.isnan(result):
             self.get_logger().info("Durations: " + str(t.value) +
-                                    "\nResult: " + str(B @ t.value / T) +
-                                    "\nAlpha: " + str(alpha.value) +
-                                    "\nSlack: " + str(slack_output.value)
+                                    "\Error: " + str(error)# +
+                                    + "\nAlpha: " + str(alpha.value)
+                                    #"\nSlack: " + str(slack_output.value)
             )
             # Mark result as available
             self.apply_durations = t.value

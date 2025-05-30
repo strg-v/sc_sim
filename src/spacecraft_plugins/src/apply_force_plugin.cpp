@@ -7,6 +7,9 @@
 #include <ignition/math/Vector3.hh>
 #include <thread>
 
+static std::mutex print_mutex;
+
+
 namespace gazebo_plugins
 {
     class ApplyForcePlugin : public gazebo::ModelPlugin
@@ -28,8 +31,14 @@ namespace gazebo_plugins
 
         ignition::math::Vector3d mounting_point;
         ignition::math::Vector3d possible_direction;
-        float force;
+        double force;
         float min_duration;
+        bool fire = false;
+        unsigned int counter = 0;
+
+        double remaining_impulse = 0.0;
+        gazebo::common::Time last_sim_time;
+        
 
         ignition::math::Vector3d current_force;
 
@@ -121,38 +130,45 @@ namespace gazebo_plugins
 
             //std::cout << "[ApplyForcePlugin] Received Message: x: " << msg->direction_selection.x << " y: " << msg->direction_selection.y << " z: " << msg->direction_selection.z << std::endl;
             
-            ignition::math::Vector3d f(
-                clamp_direction(msg->direction_selection.x),
-                clamp_direction(msg->direction_selection.y),
-                clamp_direction(msg->direction_selection.z)
-            );
 
             rclcpp::Duration ros_duration = msg->duration;
-            double duration_sec = ros_duration.seconds() + (ros_duration.nanoseconds() / 1e9);
+            double duration_sec = ros_duration.seconds();
             
-            if(duration_sec < this->min_duration){
+            if(duration_sec <this->min_duration){
                 return;
             }
 
-            gazebo::common::Time gz_duration(duration_sec);
+            gazebo::common::Time gz_duration(duration_sec);            
 
-            // Only apply force in available directions
-            f = this->possible_direction * this->force;
+            this->current_force = this->possible_direction * this->force;
+
+            RCLCPP_INFO(this->node_->get_logger(), 
+            "Force: [%.6f, %.6f, %.6f], Duration: %.3e", 
+            this->current_force.X(),
+            this->current_force.Y(),
+            this->current_force.Z(),
+            duration_sec
             
-            // Only apply force in available magnitude
-
-            this->current_force = f;
+            );
 
             auto sim_time = this->world_->SimTime();
-            end_time_ = sim_time + gz_duration;
+            this->end_time_ = sim_time + gz_duration;
+
+            this->counter += (int)round(duration_sec/0.001);
+
+            RCLCPP_INFO(this->node_->get_logger(), "Force applied to %s %d times", this->thruster_name.c_str(), this->counter);
 
         }
 
         void OnUpdate()
         {
+
             auto sim_time = world_->SimTime();
-            if(sim_time < end_time_)
+            //if(sim_time < this->end_time_)
+            if(this->counter > 0)
             {
+                this->counter--;
+                this->fire = false;
 
                 ignition::math::Quaterniond rot = link_->WorldPose().Rot();
 
@@ -160,6 +176,8 @@ namespace gazebo_plugins
                 ignition::math::Vector3d world_force = rot.RotateVector(this->current_force);
 
                 this->link_->AddForceAtRelativePosition(world_force, this->mounting_point);
+
+                //this->link_->AddLinkForce(this->current_force, this->mounting_point);
 
                 // Firing effect
                 if(!this->currently_firing)
@@ -187,6 +205,8 @@ namespace gazebo_plugins
             } else 
             {
                 this->currently_firing = false;
+                this->end_time_ = this->world_->SimTime();
+
 
                 // Deactivate visual effect
                 if(this->previously_firing == true)
@@ -202,6 +222,7 @@ namespace gazebo_plugins
             }
 
             this->previously_firing = this->currently_firing;
+
 
         }
 

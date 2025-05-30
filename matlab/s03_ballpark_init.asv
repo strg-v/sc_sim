@@ -1,0 +1,205 @@
+
+
+X_0 = [
+    0;  %x
+    0;  %y
+    0;  %z
+    0;  %vx
+    0;  %vy
+    0;  %vz
+    0;  %wx
+    0;  %wy
+    0;  %wz
+    0;  %vwx
+    0;  %vwy
+    0;  %vwz
+    ];
+
+cube_length = 0.3;
+cube_mass = 3;
+
+%% Thrusters
+
+force = 0.1;
+thruster_forces = force * ones(24, 1);
+
+thruster_position_xp = [0.175, 0.0, 0.0];
+thruster_position_xm = [-0.175, 0.0, 0.0];
+thruster_position_yp = [0.0, 0.175, 0.0];
+thruster_position_ym = [0.0, -0.175, 0.0];
+thruster_position_zp = [0.0, 0.0, 0.175];
+thruster_position_zm = [0.0, 0.0, -0.175];
+
+thruster_positions = [
+    % XP
+    thruster_position_xp;
+    thruster_position_xp;
+    thruster_position_xp;
+    thruster_position_xp;
+     % XM
+    thruster_position_xm;
+    thruster_position_xm;
+    thruster_position_xm;
+    thruster_position_xm;
+    % YP
+    thruster_position_yp;
+    thruster_position_yp;
+    thruster_position_yp;
+    thruster_position_yp;
+    % YM
+    thruster_position_ym;
+    thruster_position_ym;
+    thruster_position_ym;
+    thruster_position_ym;
+    % ZP
+    thruster_position_zp;
+    thruster_position_zp;
+    thruster_position_zp;
+    thruster_position_zp;
+    % ZM
+    thruster_position_zm;
+    thruster_position_zm;
+    thruster_position_zm;
+    thruster_position_zm;
+];
+
+thruster_direction_xp = [1, 0, 0];
+thruster_direction_xm = [-1, 0, 0];
+thruster_direction_yp = [0, 1, 0];
+thruster_direction_ym = [0, -1, 0];
+thruster_direction_zp = [0, 0, 1];
+thruster_direction_zm = [0, 0, -1];
+
+thruster_directions = [
+    % XP
+    thruster_direction_yp;
+    thruster_direction_ym;
+    thruster_direction_zp;
+    thruster_direction_zm;
+    % XM
+    thruster_direction_yp;
+    thruster_direction_ym;
+    thruster_direction_zp;
+    thruster_direction_zm;
+    % YP
+    thruster_direction_xp;
+    thruster_direction_xm;
+    thruster_direction_zp;
+    thruster_direction_zm;
+    % YM
+    thruster_direction_xp;
+    thruster_direction_xm;
+    thruster_direction_zp;
+    thruster_direction_zm;
+    % ZP
+    thruster_direction_xp;
+    thruster_direction_xm;
+    thruster_direction_yp;
+    thruster_direction_ym;
+    % ZM
+    thruster_direction_xp;
+    thruster_direction_xm;
+    thruster_direction_yp;
+    thruster_direction_ym;
+];
+
+thruster_matrix_force = (thruster_forces .* thruster_directions)';
+thruster_matrix_torque = cross(thruster_matrix_force', thruster_positions)';
+
+thruster_matrix = [
+    thruster_matrix_force;
+    thruster_matrix_torque
+    ];
+
+%% SO3 Controller
+
+Kr = 0.3;
+Kw = 0.5*Kr;
+
+desiered_rot_euler = [
+    deg2rad(   50.0  )
+    deg2rad(   90.0   )
+    deg2rad(   0.0   )
+    ]';
+
+q_des = eul2quat(desiered_rot_euler);
+
+model = 'so3_ballpark.slx';
+simInput = Simulink.SimulationInput(model);
+
+simInput = simInput.setVariable('X_0', X_0);
+simInput = simInput.setVariable('Kr', Kr);
+simInput = simInput.setVariable('Kw', Kw);
+simInput = simInput.setVariable('cube_mass', cube_mass);
+simInput = simInput.setVariable('cube_length', cube_length);
+simInput = simInput.setVariable('thruster_matrix', thruster_matrix);
+
+
+
+result = sim(simInput);
+
+
+%% Plot
+close all
+
+time = result.tout;
+orientation_quat = result.orientation;
+
+orientation_eul = zeros(length(orientation_quat), 3);
+
+for i = 1:length(orientation_quat)
+    orientation_eul(i,:) = rad2deg(quat2eul(orientation_quat(:,i)'));
+end
+
+figure
+
+i = 1;
+plt = subplot(4,1,i);
+hold on
+plot(time, orientation_quat(i,:))
+yline(q_des(i), 'r');
+title(plt, ["q(" + num2str(i) + ")"]);
+
+i = 2;
+plt = subplot(4,1,i);
+hold on
+plot(time, orientation_quat(i,:))
+yline(q_des(i), 'r');
+title(plt, ["q(" + num2str(i) + ")"]);
+
+i = 3;
+plt = subplot(4,1,i);
+hold on
+plot(time, orientation_quat(i,:))
+yline(q_des(i), 'r');
+title(plt, ["q(" + num2str(i) + ")"]);
+
+i = 4;
+plt = subplot(4,1,i);
+hold on
+plot(time, orientation_quat(i,:))
+yline(q_des(i), 'r');
+title(plt, ["q(" + num2str(i) + ")"]);
+
+%%
+
+figure
+
+plt = subplot(3,1,1)
+plot(time, orientation_eul(:,1))
+grid on
+ylabel('x angle [deg]')
+xlabel('t [s]')
+
+plt = subplot(3,1,2)
+plot(time, orientation_eul(:,2))
+grid on
+ylabel('y angle [deg]')
+xlabel('t [s]')
+
+plt = subplot(3,1,3)
+plot(time, orientation_eul(:,3))
+grid on
+ylabel('z angle [deg]')
+xlabel('t [s]')
+
